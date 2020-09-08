@@ -1,0 +1,7 @@
+<div *ngIf="imagesPaths != null" class="gallery">
+  <div *ngFor="let imagePath of imagesPaths" class="gallery-item">
+    <img [src]="baseImageUrl + '/' + imagePath" width="200" height="200" alt="image">
+    <button type="button" (click)="downloadFile(imagePath)">Download</button>
+    <button type="button" (click)="deleteImage(imagePath)">Delete</button>
+  </div>
+</div>
