@@ -1,3 +1,4 @@
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
@@ -28,9 +29,11 @@ namespace Web.Services
 
         public Task<bool> Delete(string container, string filePath)
         {
-            if (_cache.CacheExist(filePath))
+            var cacheFileName = $"{container}_{filePath}";
+            
+            if (_cache.CacheExist(cacheFileName))
             {
-                return Task.FromResult(_cache.RemoveCacheFile(filePath));
+                return Task.FromResult(_cache.RemoveCacheFile(cacheFileName));
             }
             return _wrappeeStorage.Delete(container, filePath);
         }
@@ -40,17 +43,39 @@ namespace Web.Services
             return _wrappeeStorage.List(container);
         }
 
-        public Task<(Stream file, string contentType)?> Get(string container, string filePath)
+        public async Task<(Stream file, string contentType)?> Get(string container, string filePath)
         {
-            if (_cache.CacheExist(filePath))
+            var cacheFileName = $"{container}_{filePath}";
+            
+            if (_cache.CacheExist(cacheFileName))
             {
-                var bytes = _cache.GetFileFromCache(filePath);
+                Console.WriteLine("--------------------------");
+                Console.WriteLine($"Get file from cache {filePath}");
+                var bytes = _cache.GetFileFromCache(cacheFileName);
                 Stream memoryStream = new MemoryStream(bytes);
-                (Stream file, string contentType)? result = (memoryStream, "");
-                return Task.FromResult(result);
+                (Stream file, string contentType)? result = (memoryStream, "image/jpeg");
+                return result;
             }
             
-            return _wrappeeStorage.Get(container, filePath);
+            var resultFromStorage = await _wrappeeStorage.Get(container, filePath);
+            if (resultFromStorage != null && resultFromStorage.Value.file != null)
+            {
+                await _cache.EnsureCacheFileAsync(cacheFileName, ReadFully(resultFromStorage.Value.file));
+            }
+
+            return resultFromStorage;
+        }
+        
+        private static byte[] ReadFully(Stream input)
+        {
+            byte[] buffer = new byte[16*1024];
+            using MemoryStream ms = new MemoryStream();
+            int read;
+            while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+            {
+                ms.Write(buffer, 0, read);
+            }
+            return ms.ToArray();
         }
     }
 }

@@ -54,19 +54,9 @@ namespace Web.Services
             var filePath = Path.Combine(storage, uniqueFileName);
             var fileExists = File.Exists(filePath);
 
-            if (fileExists)
-            {
-                var cacheFile = GetCacheFileFromCache(uniqueFileName);
-                if (cacheFile.ValidTo <= DateTime.UtcNow)
-                {
-                    RemoveCacheFile(uniqueFileName);
-                    return false;
-                }
-
-                return true;
-            }
-
-            return false;
+            Console.WriteLine($"File {filePath} is {fileExists}");
+            
+            return fileExists;
         }
 
         public async Task<bool> EnsureCacheFileAsync(string uniqueFileName, byte[] content)
