@@ -26,6 +26,7 @@ namespace Web
             services.AddSingleton(
                 x => new BlobServiceClient(Configuration.GetValue<string>("Storage:ConnectionString")));
             services.AddSingleton<IStorageService, StorageService>();
+            services.AddTransient<ICacheFiles, DiskCacheFiles>();
             
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
