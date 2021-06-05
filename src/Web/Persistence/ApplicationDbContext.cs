@@ -11,6 +11,8 @@ namespace Web.Persistence
         }
 
         public DbSet<Photo> Photo { get; set; }
+        public DbSet<User> Users { get; set; }
+        public DbSet<Product> Products { get; set; }
         
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
