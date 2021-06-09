@@ -1,11 +1,14 @@
 using System;
+using System.IO;
 using Microsoft.AspNetCore;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
+using Serilog;
+using Serilog.Events;
+using Serilog.Sinks.SystemConsole.Themes;
 using Web.Persistence;
 
 namespace Web
@@ -14,6 +17,7 @@ namespace Web
     {
         public static void Main(string[] args)
         {
+            
             var host = BuildWebHost(args);
 
             using (var scope = host.Services.CreateScope())
@@ -22,21 +26,29 @@ namespace Web
 
                 try
                 {
-                    var context = services.GetService<ApplicationDbContext>();
-                    context.Database.Migrate();
+                    var context = services.GetRequiredService<ApplicationDbContext>();
+
+                    if (context.Database.IsSqlServer())
+                    {
+                        context.Database.Migrate();
+                    }
                 }
                 catch (Exception ex)
                 {
-                    var logger = services.GetRequiredService<ILogger<Program>>();
-                    logger.LogError(ex, "An error occurred seeding the DB.");
+                    Log.Error("An error occurred while migrating or seeding the database. {@Exception}", ex);
+
+                    throw;
                 }
             }
 
             host.Run();
         }
-        
-        private static IWebHost BuildWebHost(string[] args) =>
-            WebHost.CreateDefaultBuilder(args)
+
+        public static IWebHost BuildWebHost(string[] args)
+        {
+            return WebHost.CreateDefaultBuilder(args)
+                .UseKestrel()
+                .UseContentRoot(Directory.GetCurrentDirectory())
                 .ConfigureAppConfiguration((hostingContext, config) =>
                 {
                     var env = hostingContext.HostingEnvironment;
@@ -46,6 +58,25 @@ namespace Web
                     config.AddEnvironmentVariables();
                 })
                 .UseStartup<Startup>()
+                .UseSerilog((context, configuration) =>
+                {
+                    configuration
+                        .MinimumLevel.Debug()
+                        .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
+                        .MinimumLevel.Override("System", LogEventLevel.Warning)
+                        .MinimumLevel.Override("Microsoft.AspNetCore.Authentication", LogEventLevel.Information)
+                        .Enrich.FromLogContext()
+                        .WriteTo.File(
+                            @"../data/logs/IdentityServer.txt", 
+                            rollingInterval: RollingInterval.Hour, 
+                            flushToDiskInterval: TimeSpan.FromSeconds(1),
+                            shared: true
+                        )
+                        .WriteTo.Console(outputTemplate: "[{Timestamp:HH:mm:ss} {Level}] {SourceContext}{NewLine}{Message:lj}{NewLine}{Exception}{NewLine}", theme: AnsiConsoleTheme.Literate);
+                })
+                .UseIISIntegration()
                 .Build();
+        }
+            
     }
 }

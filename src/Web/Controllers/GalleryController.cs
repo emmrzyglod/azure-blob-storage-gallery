@@ -77,6 +77,7 @@ namespace Web.Controllers
         public async Task<List<string>> ListFromStorage() 
             => await _storageService.List(_storageConfig.Value.PublicContainerName);
 
+        [HttpGet]
         public async Task<FileStreamResult> Get(string photoName)
         {
             var fileStream = await _storageService.Get(_storageConfig.Value.PublicContainerName, photoName);

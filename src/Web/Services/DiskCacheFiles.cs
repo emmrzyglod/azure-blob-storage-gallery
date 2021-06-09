@@ -17,11 +17,11 @@ namespace Web.Services
     public class DiskCacheFiles : ICacheFiles
     {
         private static readonly string storage = "data/cache/files";
-        private readonly ILogger<DiskCacheFiles> logger;
+        private readonly ILogger<DiskCacheFiles> _logger;
 
         public DiskCacheFiles(ILogger<DiskCacheFiles> logger)
         {
-            this.logger = logger;
+            this._logger = logger;
         }
 
         public bool CacheExists(string uniqueFileName, int? expiryTime = null)
@@ -63,17 +63,17 @@ namespace Web.Services
         {
             if (!Directory.Exists(storage))
             {
-                logger.LogInformation($"Directory created: {storage}");
+                _logger.LogInformation($"Directory created: {storage}");
                 Directory.CreateDirectory(storage);
             }
             var filePath = Path.Combine(storage, uniqueFileName);
             var fileExists = File.Exists(filePath);
-            logger.LogInformation($"File {uniqueFileName} exists? {fileExists}");
+            _logger.LogInformation($"File {uniqueFileName} exists? {fileExists}");
             
             if (!fileExists)
             {
                 await File.WriteAllBytesAsync(filePath, content);
-                logger.LogInformation($"File {uniqueFileName} in {filePath} cache created");
+                _logger.LogInformation($"File {uniqueFileName} in {filePath} cache created");
             }
             
             return fileExists;
@@ -90,7 +90,7 @@ namespace Web.Services
             }
             
             await File.WriteAllBytesAsync(filePath, content);
-            logger.LogInformation($"Override existing file {uniqueFileName} in {filePath}");
+            _logger.LogInformation($"Override existing file {uniqueFileName} in {filePath}");
             
             return true;
         }
@@ -112,7 +112,9 @@ namespace Web.Services
             
             BinaryFormatter bf = new BinaryFormatter();
             await using MemoryStream ms = new MemoryStream();
+#pragma warning disable 618
             bf.Serialize(ms, cacheFile);
+#pragma warning restore 618
             var contentBytes = ms.ToArray();
 
             if (!fileExists)
@@ -121,7 +123,7 @@ namespace Web.Services
             }
             
             await File.WriteAllBytesAsync(filePath, contentBytes);
-            logger.LogInformation($"Override existing file {uniqueFileName} in {filePath}");
+            _logger.LogInformation($"Override existing file {uniqueFileName} in {filePath}");
             
             return true;
         }
@@ -190,7 +192,9 @@ namespace Web.Services
             BinaryFormatter binForm = new BinaryFormatter();
             memStream.Write(arrBytes, 0, arrBytes.Length);
             memStream.Seek(0, SeekOrigin.Begin);
+#pragma warning disable 618
             Object obj = (Object) binForm.Deserialize(memStream);
+#pragma warning restore 618
             return obj;
         }
     }

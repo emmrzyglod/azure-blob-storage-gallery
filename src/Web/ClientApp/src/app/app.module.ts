@@ -9,6 +9,7 @@ import {NavMenuComponent} from './nav-menu/nav-menu.component';
 import {HomeComponent} from './home/home.component';
 import {AddImageComponent} from './add-image/add-image.component';
 import {ImagesListComponent} from './images-list/images-list.component';
+import {AddProductComponent} from "./add-product/add-product.component";
 
 @NgModule({
   declarations: [
@@ -16,6 +17,7 @@ import {ImagesListComponent} from './images-list/images-list.component';
     NavMenuComponent,
     HomeComponent,
     AddImageComponent,
+    AddProductComponent,
     ImagesListComponent,
   ],
   imports: [
