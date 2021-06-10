@@ -2,6 +2,7 @@ import {Component, Inject} from '@angular/core';
 import {HttpClient, HttpHeaders} from '@angular/common/http';
 import {FormBuilder, FormGroup, Validators} from '@angular/forms';
 import {Subject} from 'rxjs';
+import {FileParameter, ShopClient} from "../../app-api";
 
 @Component({
   selector: 'app-add-product',
@@ -16,9 +17,17 @@ export class AddProductComponent {
 
   imageAdded: Subject<void> = new Subject<void>();
 
-  constructor(private http: HttpClient, @Inject('BASE_URL') baseUrl: string, private fb: FormBuilder) {
+  constructor(
+    private shopClient: ShopClient,
+    private http: HttpClient,
+    @Inject('BASE_URL') baseUrl: string,
+    private fb: FormBuilder)
+  {
     this.baseUrl = baseUrl;
     this.form = this.fb.group({
+      name: ['', Validators.required],
+      description: ['', Validators.required],
+      price: [null, Validators.required],
       photo: ['', Validators.required]
     });
   }
@@ -33,24 +42,19 @@ export class AddProductComponent {
   sendForm(event) {
 
     let file: File = this.form.controls.photo.value;
+    console.log(this.form);
+    console.log(this.form.controls);
+    console.log(this.form.controls.name);
+    const name = this.form.controls.name.value;
+    const description = this.form.controls.description.value;
+    const price = this.form.controls.price.value;
+    const fileToRequest: FileParameter = {
+      data: file,
+      fileName: file.name
+    };
 
-    if(file != null) {
-
-      let formData:FormData = new FormData();
-      formData.append('file', file, file.name);
-      let headers = new HttpHeaders();
-
-      headers.append('Content-Type', 'multipart/form-data');
-      headers.append('Accept', 'application/json');
-
-      this.uploadInProgress = true;
-
-      this.http
-        .post<string>(this.baseUrl + 'Gallery/AddPhoto', formData, {reportProgress: true, observe: 'events', headers: headers})
-        .subscribe(result => {
-          console.log(result);
-          this.imageAdded.next();
-        }, error => console.error(error));
-    }
+    this.shopClient
+      .addProduct(name, description, price, fileToRequest)
+      .subscribe();
   }
 }

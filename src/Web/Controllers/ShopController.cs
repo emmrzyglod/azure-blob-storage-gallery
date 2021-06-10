@@ -44,7 +44,6 @@ namespace Web.Controllers
                 var fileAsBytes = await file.GetBytesAsync();
                 var fileName = await _storageService.Add(fileAsBytes, _storageConfig.Value.PublicContainerName, imageName, file.ContentType);
                 photoEntity = new Photo(fileName);
-                await _context.Photo.AddAsync(photoEntity);
             }
 
             var product = new Product(request.Name, request.Description, request.Price, photoEntity);
@@ -74,8 +73,10 @@ namespace Web.Controllers
 
                 if (product.Photo != null)
                 {
-                    dto.PhotoUrl = $"{_storageConfig.Value.Url}/{_storageConfig.Value.PublicContainerName}";
+                    dto.PhotoUrl = $"{_storageConfig.Value.Url}/{_storageConfig.Value.PublicContainerName}/{product.Photo.Path}";
                 }
+                
+                responseProducts.Add(dto);
             }
 
             return new BrowseProductsResponse

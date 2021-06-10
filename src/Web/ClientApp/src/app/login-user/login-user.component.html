@@ -1,0 +1,6 @@
+<div class="upload-section">
+  <form [formGroup]="form" (ngSubmit)="sendForm($event)">
+    <input type="email" formControlName="email" placeholder="Email">
+    <button type="submit" [disabled]="!form.valid">Save</button>
+  </form>
+</div>

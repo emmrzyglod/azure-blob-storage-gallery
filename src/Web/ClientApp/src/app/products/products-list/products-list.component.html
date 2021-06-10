@@ -1,0 +1,8 @@
+<div *ngIf="products != null" class="gallery">
+  <div *ngFor="let product of products" class="gallery-item">
+    <img [src]="product.photoUrl" width="200" height="200" alt="image">
+    <p>Name: {{ product.name }}</p>
+    <p>Description: {{ product.description }}</p>
+    <p>Price: {{ product.price }}</p>
+  </div>
+</div>

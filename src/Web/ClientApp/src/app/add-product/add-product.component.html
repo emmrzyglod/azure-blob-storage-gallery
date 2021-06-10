@@ -1,8 +1,0 @@
-<div class="upload-section">
-  <form [formGroup]="form" (ngSubmit)="sendForm($event)" enctype="multipart/form-data">
-    <input type="file" (change)="addImage($event)" accept="image/*">
-    <button type="submit" [disabled]="!form.valid">Save</button>
-  </form>
-</div>
-
-<app-images-list [events]="imageAdded.asObservable()"></app-images-list>
