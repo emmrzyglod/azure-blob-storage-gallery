@@ -5,6 +5,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Converters;
 using Web.Config;
 using Web.Persistence;
 using Web.Services;
@@ -30,10 +32,29 @@ namespace Web
             services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")));
             
-            services.AddSwaggerDocument();
-            
             services.Configure<StorageConfig>(Configuration.GetSection("Storage"));
             
+            services
+                .AddControllers()
+                .AddNewtonsoftJson(options =>
+                {
+                    options.SerializerSettings.NullValueHandling = NullValueHandling.Ignore;
+                    options.SerializerSettings.Converters.Add(new StringEnumConverter());
+                });
+            
+            services.AddCors(o => o.AddPolicy("MyPolicy", builder =>
+            {
+                builder.SetIsOriginAllowed(_ => true)
+                    .AllowAnyMethod()
+                    .AllowAnyHeader()
+                    .AllowCredentials();
+            }));
+
+            services.AddOpenApiDocument(configure =>
+            {
+                configure.Title = "App API";
+            });
+
             services.AddControllersWithViews();
             // In production, the Angular files will be served from this directory
             services.AddSpaStaticFiles(configuration =>
@@ -62,13 +83,18 @@ namespace Web
             {
                 app.UseSpaStaticFiles();
             }
-
-            app.UseRouting();
             
-            app.UseOpenApi(); // serve OpenAPI/Swagger documents
-            app.UseSwaggerUi3(); // serve Swagger UI
-            // app.UseReDoc(); // serve ReDoc UI
+            app.UseOpenApi();
+            app.UseSwaggerUi3(settings =>
+            {
+                settings.Path = "/api";
+                settings.DocumentPath = "/api/specification.json";
+            });
+            
+            app.UseRouting();
 
+            app.UseCors("MyPolicy");
+            
             app.UseEndpoints(endpoints =>
             {
                 endpoints.MapControllerRoute(
