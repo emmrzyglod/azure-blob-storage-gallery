@@ -1,12 +1,10 @@
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
 using Web.Config;
 using Web.Controllers.Models;
@@ -47,13 +45,15 @@ namespace Web.Controllers
 
             var fileAsBytes = await file.GetBytesAsync();
 
-            var fileName = await _storageService.Add(fileAsBytes, "public", imageName, file.ContentType);
+            var storageContainerName = _storageConfig.Value.PublicContainerName;
+
+            var fileName = await _storageService.Add(fileAsBytes, storageContainerName, imageName, file.ContentType);
             
             var photoEntity = new Photo(fileName);
             await _context.AddAsync(photoEntity);
             await _context.SaveChangesAsync();
 
-            var fullPath = $"{_storageConfig.Value.Url}/{_storageConfig.Value.PublicContainerName}/{fileName}";
+            var fullPath = $"{_storageConfig.Value.Url}/{storageContainerName}/{fileName}";
 
             return fullPath;
         }
